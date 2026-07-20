@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Puter → OpenCode Bridge</title>
+<style>body{font:16px system-ui;margin:2rem}#status{padding:.8rem;background:#eee;white-space:pre-wrap}</style>
+<h1>Puter → OpenCode Bridge</h1>
+<p id="status">Starting…</p>
+<script src="https://js.puter.com/v2/"></script>
+<script>
+  const parameters = new URLSearchParams(location.search);
+  const token = parameters.get('token');
+  const status = document.querySelector('#status');
+  const endpoint = location.origin;
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const requestedConcurrency = Number(parameters.get('concurrency'));
+  const maxConcurrentRequests = Number.isInteger(requestedConcurrency)
+    ? Math.min(8, Math.max(1, requestedConcurrency))
+    : 2;
+  let activeRequests = 0;
+
+  const textFrom = value => value?.message?.content ?? value?.text ?? String(value ?? '');
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  async function answer(request) {
+    activeRequests += 1;
+    status.textContent = `Querying ${request.model} (${activeRequests}/${maxConcurrentRequests})…`;
+    try {
+      const result = await puter.ai.chat(request.prompt, {
+        model: request.model,
+        ...(request.options || {})
+      });
+      await fetch(`${endpoint}/answer`, { method: 'POST', headers,
+        body: JSON.stringify({ id: request.id, result }) });
+    } catch (error) {
+      await fetch(`${endpoint}/answer`, { method: 'POST', headers,
+        body: JSON.stringify({ id: request.id, error: error.message || String(error) }) });
+    } finally {
+      activeRequests -= 1;
+      status.textContent = activeRequests
+        ? `Processing ${activeRequests}/${maxConcurrentRequests} OpenCode requests…`
+        : 'Connected. Waiting for OpenCode requests…';
+    }
+  }
+
+  async function run() {
+    if (!token) { status.textContent = 'The URL is missing its token.'; return; }
+    status.textContent = 'Connected. Up to 2 simultaneous OpenCode requests.';
+    for (;;) {
+      try {
+        if (activeRequests >= maxConcurrentRequests) {
+          await wait(100);
+          continue;
+        }
+        const response = await fetch(`${endpoint}/next`, { headers });
+        if (!response.ok) throw new Error(`Bridge returned ${response.status}`);
+        const { request } = await response.json();
+        if (!request) continue;
+        void answer(request);
+      } catch (error) {
+        status.textContent = 'Reconnecting: ' + (error.message || error);
+        await wait(3000);
+      }
+    }
+  }
+  run();
+</script>
+</html>
