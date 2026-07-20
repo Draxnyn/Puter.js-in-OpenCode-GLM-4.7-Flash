@@ -1,0 +1,105 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "enabled_providers": ["puter"],
+  "model": "puter/glm-4.7-flash",
+  "agent": {
+    "build": {
+      "model": "puter/glm-4.7-flash",
+      "prompt": "Você é o agente mestre. Para tarefas que se beneficiem de paralelismo, pode delegar apenas aos sete subagentes puter-worker-1, puter-worker-2, puter-worker-3, puter-worker-4, puter-worker-5, puter-worker-6 e puter-worker-7. Nunca inicie mais de sete subagentes para uma mesma tarefa; aguarde e consolide seus resultados.",
+      "permission": {
+        "task": {
+          "*": "deny",
+          "puter-worker-1": "allow",
+          "puter-worker-2": "allow",
+          "puter-worker-3": "allow",
+          "puter-worker-4": "allow",
+          "puter-worker-5": "allow",
+          "puter-worker-6": "allow",
+          "puter-worker-7": "allow"
+        }
+      }
+    },
+    "puter-worker-1": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-2": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-3": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-4": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-5": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-6": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    },
+    "puter-worker-7": {
+      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "mode": "subagent",
+      "model": "puter/glm-4.7-flash",
+      "steps": 12,
+      "permission": {
+        "task": "deny"
+      }
+    }
+  },
+  "provider": {
+    "puter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Puter (GLM-4.7 Flash)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8765/v1",
+        "apiKey": "{env:PUTER_BRIDGE_TOKEN}"
+      },
+      "models": {
+        "glm-4.7-flash": {
+          "name": "GLM-4.7 Flash via Puter",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        }
+      }
+    }
+  }
+}
