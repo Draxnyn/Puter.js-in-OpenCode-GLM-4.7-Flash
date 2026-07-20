@@ -6,6 +6,9 @@ O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compat
 
 ---
 
+<img width="1292" height="635" alt="image" src="https://github.com/user-attachments/assets/f32d4234-4d42-41d6-b202-e53905984036" />
+
+
 ## Ideia central
 
 O OpenCode já aceita provedores compatíveis com OpenAI. Este projeto expõe um endpoint local que converte requisições do OpenCode em chamadas `puter.ai.chat()` e converte a resposta de volta para o formato chat-completions da OpenAI.
@@ -68,7 +71,7 @@ Nenhum pacote Python precisa ser instalado.
 
 | Variável | Padrão | Função |
 |---|---:|---|
-| `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. Faixa aceita: 1–8. |
+| `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. |
 | `PUTER_BRIDGE_PORT` | `8765` | Porta local da ponte. |
 | `PUTER_BRIDGE_TIMEOUT` | `180` | Tempo de espera pela resposta do navegador, em segundos. |
 
@@ -103,12 +106,3 @@ $XDG_STATE_HOME/opencode/puter-bridge.log
 ```
 
 Quando `XDG_STATE_HOME` não está definido, usa `~/.local/state/opencode/puter-bridge.log`.
-
----
-
-## Segurança
-
-- A ponte escuta somente em `127.0.0.1`.
-- O inicializador gera um token local aleatório.
-- Não publique uma porta de ponte ativa nem sua URL com token.
-- Não inclua arquivos `.env`, logs ou dados de navegador no repositório.
