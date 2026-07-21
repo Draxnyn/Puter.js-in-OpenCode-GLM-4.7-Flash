@@ -19,7 +19,10 @@ PORT = int(os.getenv("PUTER_BRIDGE_PORT", "8765"))
 # The local bridge remains token-protected. OpenCode uses the same token via
 # PUTER_BRIDGE_TOKEN, without storing secrets in its configuration.
 TOKEN = os.environ["PUTER_BRIDGE_TOKEN"]
-REQUEST_TIMEOUT = int(os.getenv("PUTER_BRIDGE_TIMEOUT", "180"))
+# A quota/rate-limit response is retried by the browser client. Keep the
+# OpenCode request alive long enough for those retries instead of ending an
+# agent or subagent on the first transient response.
+REQUEST_TIMEOUT = int(os.getenv("PUTER_BRIDGE_TIMEOUT", "600"))
 PAGE = Path(__file__).with_name("puter_bridge.html")
 PUTER_MODEL = "z-ai:z-ai/glm-4.7-flash"
 OPENCODE_MODEL = "glm-4.7-flash"
