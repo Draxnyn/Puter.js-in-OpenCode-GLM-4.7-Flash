@@ -76,7 +76,7 @@ Keep the **Puter → OpenCode Bridge** browser tab open while using OpenCode. On
 |---|---:|---|
 | `PUTER_MAX_CONCURRENT` | `2` | Maximum simultaneous Puter calls. Accepted range: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Local bridge port. |
-| `PUTER_BRIDGE_TIMEOUT` | `180` | Browser response timeout, in seconds. |
+| `PUTER_BRIDGE_TIMEOUT` | `600` | Browser response timeout, in seconds. |
 
 Example:
 
@@ -97,6 +97,10 @@ OpenCode itself controls task scheduling. The configuration limits the available
 ## Token usage
 
 The bridge forwards `prompt_tokens`, `completion_tokens`, and `total_tokens` whenever Puter includes them in the response metadata. Some Puter providers may not return per-request usage; in that case OpenCode cannot display exact token counts or cost.
+
+## Quota retries
+
+When Puter returns a quota or rate-limit error, the browser bridge keeps the same OpenCode request alive and retries it after 5 seconds. The delay increases up to 30 seconds between attempts. This applies equally to the master agent and every subagent; a transient quota response is not returned to OpenCode as a final tool failure.
 
 ---
 
