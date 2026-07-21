@@ -5,6 +5,7 @@ source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 bridge_dir="${OPENCODE_PUTER_BRIDGE_DIR:-$HOME/.local/share/opencode-puter-bridge}"
 bin_dir="$HOME/.local/bin"
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+tui_config="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/tui.json"
 real_opencode="$HOME/.opencode/bin/opencode"
 
 port_available() {
@@ -28,8 +29,13 @@ for dependency in git curl python3 openssl; do
 done
 
 if [[ ! -x "$real_opencode" ]]; then
-    printf 'Installing OpenCode…\n'
-    curl -fsSL https://opencode.ai/install | bash
+    existing_opencode="$(command -v opencode || true)"
+    if [[ -n "$existing_opencode" && "$existing_opencode" != "$bin_dir/opencode" ]]; then
+        real_opencode="$existing_opencode"
+    else
+        printf 'Installing OpenCode…\n'
+        curl -fsSL https://opencode.ai/install | bash
+    fi
 fi
 
 mkdir -p "$bridge_dir" "$bin_dir" "$config_dir"
@@ -58,16 +64,35 @@ fi
 
 install -m 0644 "$source_dir/puter_bridge.py" "$bridge_dir/puter_bridge.py"
 install -m 0644 "$source_dir/puter_bridge.html" "$bridge_dir/puter_bridge.html"
+install -m 0644 "$source_dir/subagent-selector.ts" "$bridge_dir/subagent-selector.ts"
 install -m 0755 "$source_dir/run_opencode_puter.sh" "$bridge_dir/run_opencode_puter.sh"
 install -m 0755 "$source_dir/opencode-wrapper.sh" "$bin_dir/opencode"
 printf 'PUTER_BRIDGE_PORT=%q\n' "$bridge_port" > "$bridge_dir/bridge-settings.sh"
+printf 'OPENCODE_REAL_BIN=%q\n' "$real_opencode" >> "$bridge_dir/bridge-settings.sh"
+if [[ ! -e "$bridge_dir/subagent-model" ]]; then
+    printf '%s\n' 'glm-4.7-flash' > "$bridge_dir/subagent-model"
+fi
 
 if [[ ! -e "$config_dir/opencode.jsonc" ]]; then
     install -m 0644 "$source_dir/templates/opencode.jsonc" "$config_dir/opencode.jsonc"
     sed -i "s#127.0.0.1:8765#127.0.0.1:${bridge_port}#g" "$config_dir/opencode.jsonc"
     printf 'Installed OpenCode configuration.\n'
+elif grep -Eq 'Puter \(GLM-4\.7 Flash\)|Puter free models' "$config_dir/opencode.jsonc"; then
+    cp -p "$config_dir/opencode.jsonc" "$config_dir/opencode.jsonc.before-puter-update"
+    install -m 0644 "$source_dir/templates/opencode.jsonc" "$config_dir/opencode.jsonc"
+    sed -i "s#127.0.0.1:8765#127.0.0.1:${bridge_port}#g" "$config_dir/opencode.jsonc"
+    printf 'Updated the Puter configuration (backup: opencode.jsonc.before-puter-update).\n'
 else
     printf 'Kept existing OpenCode configuration: %s\n' "$config_dir/opencode.jsonc"
+fi
+
+if [[ ! -e "$tui_config" ]]; then
+    install -m 0644 "$source_dir/templates/tui.json" "$tui_config"
+    sed -i "s#PUTER_SUBAGENT_SELECTOR_PLUGIN#file://${bridge_dir}/subagent-selector.ts#g" "$tui_config"
+    printf 'Installed the /subagent TUI selector.\n'
+elif ! grep -Fq 'subagent-selector.ts' "$tui_config"; then
+    printf 'Existing TUI configuration needs this plugin entry:\n'
+    printf '  file://%s/subagent-selector.ts\n' "$bridge_dir"
 fi
 
 path_line='export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"'

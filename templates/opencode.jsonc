@@ -5,7 +5,7 @@
   "agent": {
     "build": {
       "model": "puter/glm-4.7-flash",
-      "prompt": "Você é o agente mestre. Para tarefas que se beneficiem de paralelismo, pode delegar apenas aos sete subagentes puter-worker-1, puter-worker-2, puter-worker-3, puter-worker-4, puter-worker-5, puter-worker-6 e puter-worker-7. Nunca inicie mais de sete subagentes para uma mesma tarefa; aguarde e consolide seus resultados.",
+      "prompt": "You are the master agent and always use GLM-4.7 Flash. Delegate parallel work only to puter-worker-1 through puter-worker-7. Their model is selected with /subagent. Never start more than seven subagents for one task; wait for them and consolidate their results.",
       "permission": {
         "task": {
           "*": "deny",
@@ -20,73 +20,59 @@
       }
     },
     "puter-worker-1": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-2": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-3": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-4": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-5": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-6": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     },
     "puter-worker-7": {
-      "description": "Subagente de implementação e investigação, via GLM-4.7 Flash.",
+      "description": "Implementation and investigation subagent using the model selected with /subagent.",
       "mode": "subagent",
-      "model": "puter/glm-4.7-flash",
+      "model": "puter/subagent",
       "steps": 12,
-      "permission": {
-        "task": "deny"
-      }
+      "permission": { "task": "deny" }
     }
   },
   "provider": {
     "puter": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Puter (GLM-4.7 Flash)",
+      "name": "Puter free models",
       "options": {
         "baseURL": "http://127.0.0.1:8765/v1",
         "apiKey": "{env:PUTER_BRIDGE_TOKEN}"
@@ -94,10 +80,19 @@
       "models": {
         "glm-4.7-flash": {
           "name": "GLM-4.7 Flash via Puter",
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "nemotron-nano-9b-v2-free": {
+          "name": "NVIDIA Nemotron Nano 9B V2 via Puter",
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "cobuddy-free": {
+          "name": "Baidu Qianfan CoBuddy via Puter",
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "subagent": {
+          "name": "Subagent model selected with /subagent",
+          "limit": { "context": 131072, "output": 8192 }
         }
       }
     }

@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session and is configured for **GLM-4.7 Flash**.
+**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash remains the default master model**, while the subagent model can be selected in the TUI.
 
 ---
 
@@ -11,7 +11,7 @@
 OpenCode already supports OpenAI-compatible providers. This project exposes a local endpoint that translates OpenCode requests into `puter.ai.chat()` calls, then translates the response back into the OpenAI chat-completions format.
 
 ```text
-OpenCode → local bridge → browser with Puter session → GLM-4.7 Flash
+OpenCode → local bridge → browser with Puter session → selected Puter model
 ```
 
 The bridge stays on `127.0.0.1`; no Puter session token is sent to an external server.
@@ -20,12 +20,20 @@ The bridge stays on `127.0.0.1`; no Puter session token is sent to an external s
 
 ## What it provides
 
-- A single configured model: `puter/glm-4.7-flash`.
+- Default master model: `puter/glm-4.7-flash`.
 - OpenAI-compatible `/v1/chat/completions` endpoint.
 - Tool-call translation for agentic OpenCode actions.
-- Up to seven GLM subagents available to the master agent.
+- Up to seven subagents using the model selected with `/subagent`.
 - Configurable browser-side concurrency, defaulting to two simultaneous Puter requests.
 - Token usage forwarding when Puter includes usage metadata in its response.
+
+### Available models
+
+| Model | Puter ID | Intended use |
+|---|---|---|
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Default master and subagent model; agentic coding and tools |
+| NVIDIA Nemotron Nano 9B V2 | `nvidia/nemotron-nano-9b-v2:free` | Chat, configurable reasoning and high speed |
+| Baidu Qianfan CoBuddy | `baidu/cobuddy:free` | Programming, agents and tools |
 
 ---
 
@@ -44,8 +52,8 @@ No Python package needs to be installed.
 Clone the repository and run the installer:
 
 ```bash
-git clone https://github.com/Draxnyn/Puter.js-in-OpenCode-GLM-4.7-Flash.git
-cd Puter.js-in-OpenCode-GLM-4.7-Flash
+git clone https://github.com/Draxnyn/Puter.js-in-OpenCode.git
+cd Puter.js-in-OpenCode
 bash install.sh
 source ~/.bashrc
 ```
@@ -88,7 +96,15 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagents
 
-The template creates `puter-worker-1` through `puter-worker-7`. The `build` agent can delegate only to those workers; workers cannot create more workers. All agents use the same GLM model.
+The master always defaults to `puter/glm-4.7-flash`. The template creates `puter-worker-1` through `puter-worker-7`; they cannot create more workers.
+
+Type `/subagent` to open a native TUI selector, similar to `/model`. The available subagent models are:
+
+- GLM 4.7 Flash — default.
+- NVIDIA Nemotron Nano 9B V2 — `nvidia/nemotron-nano-9b-v2:free`.
+- Baidu Qianfan CoBuddy — `baidu/cobuddy:free`.
+
+Changing `/model` changes the current primary model. Changing `/subagent` changes only future subagent calls. The selection is stored locally and reused on the next launch.
 
 OpenCode itself controls task scheduling. The configuration limits the available worker identities to seven.
 

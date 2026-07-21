@@ -24,8 +24,18 @@ TOKEN = os.environ["PUTER_BRIDGE_TOKEN"]
 # agent or subagent on the first transient response.
 REQUEST_TIMEOUT = int(os.getenv("PUTER_BRIDGE_TIMEOUT", "600"))
 PAGE = Path(__file__).with_name("puter_bridge.html")
-PUTER_MODEL = "z-ai:z-ai/glm-4.7-flash"
-OPENCODE_MODEL = "glm-4.7-flash"
+MODEL_MAP = {
+    "glm-4.7-flash": "z-ai:z-ai/glm-4.7-flash",
+    "nemotron-nano-9b-v2-free": "nvidia/nemotron-nano-9b-v2:free",
+    "cobuddy-free": "baidu/cobuddy:free",
+}
+SUBAGENT_MODEL_FILE = Path(
+    os.getenv(
+        "PUTER_SUBAGENT_MODEL_FILE",
+        str(Path(__file__).with_name("subagent-model")),
+    )
+)
+DEFAULT_SUBAGENT_MODEL = "glm-4.7-flash"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -92,6 +102,16 @@ class Bridge:
 
 
 bridge = Bridge()
+
+
+def resolve_puter_model(opencode_model: str) -> str | None:
+    if opencode_model != "subagent":
+        return MODEL_MAP.get(opencode_model)
+    try:
+        selected = SUBAGENT_MODEL_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        selected = DEFAULT_SUBAGENT_MODEL
+    return MODEL_MAP.get(selected, MODEL_MAP[DEFAULT_SUBAGENT_MODEL])
 
 
 def content_from_result(result: object) -> str:
@@ -227,11 +247,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def complete_opencode_request(
         self, body: dict[str, object]
-    ) -> tuple[dict[str, object], str, dict[str, int] | None]:
-        if body.get("model") != OPENCODE_MODEL:
-            raise ValueError(
-                f"This adapter accepts only the {OPENCODE_MODEL} model."
-            )
+    ) -> tuple[dict[str, object], str, dict[str, int] | None, str]:
+        opencode_model = str(body.get("model", ""))
+        puter_model = resolve_puter_model(opencode_model)
+        if puter_model is None:
+            supported = ", ".join([*MODEL_MAP, "subagent"])
+            raise ValueError(f"Unsupported model. Available models: {supported}.")
 
         messages = body.get("messages")
         if not isinstance(messages, list) or not messages:
@@ -240,11 +261,11 @@ class Handler(BaseHTTPRequestHandler):
         options: dict[str, object] = {"tools": body.get("tools", [])}
         if body.get("tool_choice") is not None:
             options["tool_choice"] = body["tool_choice"]
-        result = bridge.submit(messages, PUTER_MODEL, options)
-        return message_from_result(result), uuid.uuid4().hex, usage_from_result(result)
+        result = bridge.submit(messages, puter_model, options)
+        return message_from_result(result), uuid.uuid4().hex, usage_from_result(result), opencode_model
 
     def send_openai_completion(self, body: dict[str, object]) -> None:
-        message, completion_id, usage = self.complete_opencode_request(body)
+        message, completion_id, usage, opencode_model = self.complete_opencode_request(body)
         created = int(time.time())
         tool_calls = message.get("tool_calls")
         finish_reason = "tool_calls" if tool_calls else "stop"
@@ -254,7 +275,7 @@ class Handler(BaseHTTPRequestHandler):
                 "id": f"chatcmpl-{completion_id}",
                 "object": "chat.completion",
                 "created": created,
-                "model": OPENCODE_MODEL,
+                "model": opencode_model,
                 "choices": [
                     {
                         "index": 0,
@@ -280,7 +301,7 @@ class Handler(BaseHTTPRequestHandler):
             "id": f"chatcmpl-{completion_id}",
             "object": "chat.completion.chunk",
             "created": created,
-            "model": OPENCODE_MODEL,
+            "model": opencode_model,
         }
         self.send_sse({
             **chunk_base,
