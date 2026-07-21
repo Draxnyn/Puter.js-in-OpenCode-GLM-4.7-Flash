@@ -76,6 +76,8 @@ opencode -n
 
 Keep the **Puter → OpenCode Bridge** browser tab open while using OpenCode. On WSL, the launcher opens the page in the Windows browser.
 
+The bridge page always displays a **Sign in to Puter** button. After authentication it becomes **Switch Puter account**, so an expired, incorrect, or stuck browser session can be replaced explicitly.
+
 ---
 
 ## Configuration

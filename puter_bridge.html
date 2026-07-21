@@ -12,7 +12,7 @@
 </style>
 <h1>Puter → OpenCode Bridge</h1>
 <p id="status">Starting…</p>
-<button id="sign-in" type="button" hidden>Sign in to Puter</button>
+<button id="sign-in" type="button">Sign in to Puter</button>
 <p id="account" hidden></p>
 <script src="https://js.puter.com/v2/"></script>
 <script>
@@ -71,6 +71,8 @@
   }
 
   async function showAccount() {
+    account.hidden = true;
+    account.textContent = '';
     try {
       const user = await puter.auth.getUser();
       const name = user?.username || user?.email || user?.uuid;
@@ -79,12 +81,14 @@
         account.hidden = false;
       }
     } catch (_) {}
+    signInButton.textContent = puter.auth.isSignedIn()
+      ? 'Switch Puter account'
+      : 'Sign in to Puter';
   }
 
   async function runBridge() {
     if (bridgeStarted) return;
     bridgeStarted = true;
-    signInButton.hidden = true;
     await showAccount();
     status.textContent = `Connected. Up to ${maxConcurrentRequests} simultaneous OpenCode requests.`;
     for (;;) {
@@ -107,14 +111,28 @@
 
   signInButton.addEventListener('click', async () => {
     signInButton.disabled = true;
-    status.textContent = 'Waiting for Puter sign-in…';
     try {
+      if (puter.auth.isSignedIn()) {
+        status.textContent = 'Signing out of the current Puter account…';
+        await puter.auth.signOut();
+        account.hidden = true;
+        account.textContent = '';
+      }
+      status.textContent = 'Waiting for Puter sign-in…';
       await puter.auth.signIn();
-      await runBridge();
+      if (bridgeStarted) {
+        await showAccount();
+        status.textContent = activeRequests
+          ? `Processing ${activeRequests}/${maxConcurrentRequests} OpenCode requests…`
+          : 'Connected. Waiting for OpenCode requests…';
+      } else {
+        await runBridge();
+      }
     } catch (error) {
       status.textContent = 'Sign-in failed: ' + (error?.msg || error?.message || String(error));
+    } finally {
       signInButton.disabled = false;
-      signInButton.hidden = false;
+      await showAccount();
     }
   });
 
@@ -128,7 +146,7 @@
       return;
     }
     status.textContent = 'Sign in to Puter to connect the free AI models to OpenCode.';
-    signInButton.hidden = false;
+    await showAccount();
   }
 
   initialize();

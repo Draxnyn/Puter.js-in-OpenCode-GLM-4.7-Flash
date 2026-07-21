@@ -67,6 +67,8 @@ Se a porta `8765` já estiver ocupada, o instalador escolhe automaticamente a pr
 
 Inicie a versão Puter com `opencode`. Para abrir o OpenCode normal, sem a ponte, use `opencode -n`. No WSL, a página da ponte é aberta no navegador do Windows. Mantenha essa aba aberta enquanto usa o OpenCode.
 
+A página da ponte sempre exibe o botão **Sign in to Puter**. Depois da autenticação, ele se torna **Switch Puter account**, permitindo substituir explicitamente uma sessão expirada, incorreta ou travada.
+
 ---
 
 ## Configuração
