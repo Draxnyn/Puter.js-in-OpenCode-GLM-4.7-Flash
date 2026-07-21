@@ -67,7 +67,7 @@ Inicie a versão Puter com `opencode`. Para abrir o OpenCode normal, sem a ponte
 |---|---:|---|
 | `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. Faixa aceita: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Porta local da ponte. |
-| `PUTER_BRIDGE_TIMEOUT` | `180` | Tempo de espera pela resposta do navegador, em segundos. |
+| `PUTER_BRIDGE_TIMEOUT` | `600` | Tempo de espera pela resposta do navegador, em segundos. |
 
 Exemplo:
 
@@ -88,6 +88,10 @@ O próprio OpenCode controla o agendamento das tarefas. A configuração limita 
 ## Uso de tokens
 
 A ponte repassa `prompt_tokens`, `completion_tokens` e `total_tokens` quando o Puter inclui esses campos nos metadados da resposta. Alguns provedores Puter podem não retornar uso por chamada; nesse caso, o OpenCode não consegue mostrar contagens ou custo exatos.
+
+## Nova tentativa de quota
+
+Quando o Puter retorna erro de quota ou rate-limit, a ponte do navegador mantém a mesma requisição do OpenCode viva e tenta novamente após 5 segundos. A espera aumenta até 30 segundos entre tentativas. Isso vale tanto para o agente mestre quanto para cada subagente: uma quota temporária não volta ao OpenCode como falha final de uma ferramenta.
 
 ---
 
