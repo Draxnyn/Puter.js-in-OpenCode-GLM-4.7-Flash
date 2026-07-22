@@ -32,7 +32,7 @@
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const errorText = error => error?.message || error?.msg || (typeof error === 'object' ? JSON.stringify(error) : String(error || 'Unknown error'));
-  const isQuotaError = error => /\b(quota|rate[ -]?limit|too many requests?|resource exhausted|credits? exceeded)\b|\b429\b/i.test(errorText(error));
+  const isTransientProviderError = error => /\b(quota|rate[ -]?limit|too many requests?|resource exhausted|credits? exceeded|ai provider unavailable|provider unavailable|service unavailable)\b|\b429\b|\b503\b/i.test(errorText(error));
 
   async function prepareLocalFiles(request) {
     const temporaryPaths = [];
@@ -69,10 +69,10 @@
           ...(request.options || {})
         });
       } catch (error) {
-        if (!isQuotaError(error)) throw error;
+        if (!isTransientProviderError(error)) throw error;
         attempt += 1;
         const delay = Math.min(30_000, 5_000 * 2 ** (attempt - 1));
-        status.textContent = `Puter quota reached. Retrying this request in ${Math.ceil(delay / 1000)}s (${activeRequests}/${maxConcurrentRequests})…`;
+        status.textContent = `Puter provider is temporarily unavailable. Retrying this request in ${Math.ceil(delay / 1000)}s (${activeRequests}/${maxConcurrentRequests})…`;
         await wait(delay);
       }
     }
