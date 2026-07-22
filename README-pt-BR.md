@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash é o modelo mestre padrão** e encaminha automaticamente o trabalho para subagentes especializados.
+O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash é o modelo mestre padrão**.
 
 ---
 
@@ -95,7 +95,7 @@ A ponte repassa `prompt_tokens`, `completion_tokens` e `total_tokens` quando o P
 
 ## Nova tentativa de quota
 
-Quando o Puter retorna erro de quota ou rate-limit, a ponte do navegador mantém a mesma requisição do OpenCode viva e tenta novamente após 5 segundos. A espera aumenta até 30 segundos entre tentativas. Isso vale tanto para o agente mestre quanto para cada subagente: uma quota temporária não volta ao OpenCode como falha final de uma ferramenta.
+Quando o Puter retorna erro de quota ou rate-limit, a ponte do navegador mantém a requisição viva e tenta novamente após 5 segundos. A espera aumenta até 30 segundos entre tentativas.
 
 ---
 

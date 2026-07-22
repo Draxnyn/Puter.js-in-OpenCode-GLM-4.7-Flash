@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash is the default master model** and automatically routes work to specialized subagents.
+**OpenCode Puter Bridge** connects OpenCode to Puter through a local OpenAI-compatible API. It uses a browser-authenticated Puter session. **GLM-4.7 Flash is the default master model**.
 
 ---
 
@@ -104,7 +104,7 @@ The bridge forwards `prompt_tokens`, `completion_tokens`, and `total_tokens` whe
 
 ## Quota retries
 
-When Puter returns a quota or rate-limit error, the browser bridge keeps the same OpenCode request alive and retries it after 5 seconds. The delay increases up to 30 seconds between attempts. This applies equally to the master agent and every subagent; a transient quota response is not returned to OpenCode as a final tool failure.
+When Puter returns a quota or rate-limit error, the browser bridge keeps the request alive and retries it after 5 seconds. The delay increases up to 30 seconds between attempts.
 
 ---
 
