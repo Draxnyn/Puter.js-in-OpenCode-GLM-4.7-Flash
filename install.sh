@@ -91,8 +91,8 @@ else
     printf 'Kept existing OpenCode configuration: %s\n' "$config_dir/opencode.jsonc"
 fi
 
-# Remove the selector used by older releases. Subagent models are now routed
-# automatically by their fixed code, reasoning, and vision identities.
+# Remove the selector used by older releases. The master routes work across
+# the code, reasoning, and vision pools while keeping a shared seven-agent cap.
 if [[ -f "$tui_config" ]]; then
     python3 - "$tui_config" <<'PY'
 import json

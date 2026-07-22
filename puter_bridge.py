@@ -138,8 +138,6 @@ def local_media_paths(messages: list[object]) -> list[Path]:
     seen: set[Path] = set()
     for candidate in candidates:
         path = Path(candidate).expanduser()
-        if not path.is_file() and Path(f"{path}.png").is_file():
-            path = Path(f"{path}.png")
         try:
             resolved = path.resolve(strict=True)
             size = resolved.stat().st_size

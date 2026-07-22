@@ -5,17 +5,15 @@
   "agent": {
     "build": {
       "model": "puter/glm-4.7-flash",
-      "prompt": "You are the master agent and always use GLM-4.7 Flash. Choose subagents by task: use puter-code-1 through puter-code-3 for code and repository work; use puter-reason-1 and puter-reason-2 for heavier reasoning; use puter-vision-1 and puter-vision-2 for every image, screenshot, visual document, or PDF analysis. Never analyze visual input yourself when a vision subagent is available. Never start more than seven subagents for one task; wait for them and consolidate their results.",
+      "prompt": "You are the master agent and always use GLM-4.7 Flash. Choose subagents by task: puter-code-1 through puter-code-7 use North Mini Code for code and repository work; puter-reason-1 through puter-reason-7 use Ternary Bonsai 27B for heavy reasoning; puter-vision-1 through puter-vision-7 use GLM 4.6V Flash for every image, screenshot, visual document, or PDF analysis. These are interchangeable pools, not fixed allocations. You may start at most seven subagents total for one task across every pool; distribute those seven slots according to the work, wait for them, and consolidate their results. Never analyze visual input yourself when a vision subagent is available.",
       "permission": {
         "task": {
           "*": "deny",
           "puter-code-1": "allow",
           "puter-code-2": "allow",
-          "puter-code-3": "allow",
-          "puter-reason-1": "allow",
-          "puter-reason-2": "allow",
-          "puter-vision-1": "allow",
-          "puter-vision-2": "allow"
+          "puter-code-3": "allow", "puter-code-4": "allow", "puter-code-5": "allow", "puter-code-6": "allow", "puter-code-7": "allow",
+          "puter-reason-1": "allow", "puter-reason-2": "allow", "puter-reason-3": "allow", "puter-reason-4": "allow", "puter-reason-5": "allow", "puter-reason-6": "allow", "puter-reason-7": "allow",
+          "puter-vision-1": "allow", "puter-vision-2": "allow", "puter-vision-3": "allow", "puter-vision-4": "allow", "puter-vision-5": "allow", "puter-vision-6": "allow", "puter-vision-7": "allow"
         }
       }
     },
@@ -40,6 +38,18 @@
       "steps": 12,
       "permission": { "task": "deny" }
     },
+    "puter-code-4": {
+      "description": "Code and repository implementation subagent.", "mode": "subagent", "model": "puter/cohere/north-mini-code:free", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-code-5": {
+      "description": "Code and repository implementation subagent.", "mode": "subagent", "model": "puter/cohere/north-mini-code:free", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-code-6": {
+      "description": "Code and repository implementation subagent.", "mode": "subagent", "model": "puter/cohere/north-mini-code:free", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-code-7": {
+      "description": "Code and repository implementation subagent.", "mode": "subagent", "model": "puter/cohere/north-mini-code:free", "steps": 12, "permission": { "task": "deny" }
+    },
     "puter-reason-1": {
       "description": "Heavy reasoning subagent. Use for architecture, difficult analysis, planning, mathematics, and complex multi-step problems.",
       "mode": "subagent",
@@ -54,6 +64,21 @@
       "steps": 12,
       "permission": { "task": "deny" }
     },
+    "puter-reason-3": {
+      "description": "Heavy reasoning subagent.", "mode": "subagent", "model": "puter/prism-ml/ternary-bonsai-27b", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-reason-4": {
+      "description": "Heavy reasoning subagent.", "mode": "subagent", "model": "puter/prism-ml/ternary-bonsai-27b", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-reason-5": {
+      "description": "Heavy reasoning subagent.", "mode": "subagent", "model": "puter/prism-ml/ternary-bonsai-27b", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-reason-6": {
+      "description": "Heavy reasoning subagent.", "mode": "subagent", "model": "puter/prism-ml/ternary-bonsai-27b", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-reason-7": {
+      "description": "Heavy reasoning subagent.", "mode": "subagent", "model": "puter/prism-ml/ternary-bonsai-27b", "steps": 12, "permission": { "task": "deny" }
+    },
     "puter-vision-1": {
       "description": "Vision and document subagent. Always use for images, screenshots, diagrams, scanned documents, visual files, and PDFs.",
       "mode": "subagent",
@@ -67,6 +92,21 @@
       "model": "puter/z-ai/glm-4.6v-flash",
       "steps": 12,
       "permission": { "task": "deny" }
+    },
+    "puter-vision-3": {
+      "description": "Vision and document subagent.", "mode": "subagent", "model": "puter/z-ai/glm-4.6v-flash", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-vision-4": {
+      "description": "Vision and document subagent.", "mode": "subagent", "model": "puter/z-ai/glm-4.6v-flash", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-vision-5": {
+      "description": "Vision and document subagent.", "mode": "subagent", "model": "puter/z-ai/glm-4.6v-flash", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-vision-6": {
+      "description": "Vision and document subagent.", "mode": "subagent", "model": "puter/z-ai/glm-4.6v-flash", "steps": 12, "permission": { "task": "deny" }
+    },
+    "puter-vision-7": {
+      "description": "Vision and document subagent.", "mode": "subagent", "model": "puter/z-ai/glm-4.6v-flash", "steps": 12, "permission": { "task": "deny" }
     }
   },
   "provider": {

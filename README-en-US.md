@@ -101,15 +101,17 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagents
 
-The master always defaults to `puter/glm-4.7-flash`. OpenCode routes work among seven fixed worker identities:
+The master always defaults to `puter/glm-4.7-flash`. It has a shared budget of **up to seven subagents per task**, not a fixed 3/2/2 split. It can distribute those seven calls freely:
 
-- `puter-code-1` through `puter-code-3` use North Mini Code.
-- `puter-reason-1` and `puter-reason-2` use Ternary Bonsai 27B.
-- `puter-vision-1` and `puter-vision-2` use GLM 4.6V Flash.
+- `puter-code-1` through `puter-code-7` use North Mini Code.
+- `puter-reason-1` through `puter-reason-7` use Ternary Bonsai 27B.
+- `puter-vision-1` through `puter-vision-7` use GLM 4.6V Flash.
 
-When a vision worker receives a conversation containing a quoted local image or PDF path, the bridge attaches the actual file instead of forwarding only its path. A missing `.drawio` path also resolves to its exported `.drawio.png` when present. PDFs are uploaded temporarily to the authenticated Puter filesystem for analysis and deleted after the response.
+For example, a task may use six code workers and one reasoning worker, or five code workers, one reasoning worker, and one vision worker. The master must never start more than seven total, across all three pools.
 
-Workers cannot create more workers. OpenCode controls scheduling, while the configuration limits the available identities to seven.
+When a vision worker receives a conversation containing a quoted local image or PDF path, the bridge attaches the actual file instead of forwarding only its path. PDFs are uploaded temporarily to the authenticated Puter filesystem for analysis and deleted after the response.
+
+Workers cannot create more workers. OpenCode controls scheduling and the master enforces the shared seven-worker limit.
 
 ---
 

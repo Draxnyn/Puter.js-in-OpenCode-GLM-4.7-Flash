@@ -92,15 +92,17 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ## Subagentes
 
-O mestre sempre começa com `puter/glm-4.7-flash`. O OpenCode distribui o trabalho entre sete identidades fixas:
+O mestre sempre começa com `puter/glm-4.7-flash`. Ele tem um orçamento compartilhado de **até sete subagentes por tarefa**, e não uma divisão fixa de 3/2/2. Pode distribuir livremente essas sete chamadas:
 
-- `puter-code-1` até `puter-code-3` usam North Mini Code.
-- `puter-reason-1` e `puter-reason-2` usam Ternary Bonsai 27B.
-- `puter-vision-1` e `puter-vision-2` usam GLM 4.6V Flash.
+- `puter-code-1` até `puter-code-7` usam North Mini Code.
+- `puter-reason-1` até `puter-reason-7` usam Ternary Bonsai 27B.
+- `puter-vision-1` até `puter-vision-7` usam GLM 4.6V Flash.
 
-Quando um trabalhador de visão recebe uma conversa contendo o caminho local de uma imagem ou PDF entre aspas, a ponte anexa o arquivo real em vez de encaminhar somente o caminho. Um caminho `.drawio` inexistente também encontra a exportação `.drawio.png`, quando ela existe. PDFs são enviados temporariamente ao filesystem autenticado do Puter e apagados depois da resposta.
+Por exemplo, uma tarefa pode usar seis trabalhadores de código e um de raciocínio; ou cinco de código, um de raciocínio e um de visão. O mestre nunca pode iniciar mais de sete no total, somando os três grupos.
 
-Os trabalhadores não podem criar novos trabalhadores. O OpenCode controla o agendamento, enquanto a configuração limita as identidades disponíveis a sete.
+Quando um trabalhador de visão recebe uma conversa contendo o caminho local de uma imagem ou PDF entre aspas, a ponte anexa o arquivo real em vez de encaminhar somente o caminho. PDFs são enviados temporariamente ao filesystem autenticado do Puter e apagados depois da resposta.
+
+Os trabalhadores não podem criar novos trabalhadores. O OpenCode controla o agendamento, e o mestre aplica o limite compartilhado de sete.
 
 ---
 
