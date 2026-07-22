@@ -42,7 +42,14 @@
       if (!Array.isArray(message?.content)) return message;
       const content = await Promise.all(message.content.map(async part => {
         if (part?.type === 'bridge_media') {
-          mediaURLs.push(part.data_url);
+          const blob = await fetch(part.data_url).then(response => response.blob());
+          const uploaded = await puter.fs.write(
+            `opencode-bridge-${request.id}-media-${fileIndex++}`,
+            blob,
+            { overwrite: true }
+          );
+          temporaryPaths.push(uploaded.path);
+          mediaURLs.push(uploaded.path);
           return null;
         }
         if (part?.type !== 'local_file') return part;
