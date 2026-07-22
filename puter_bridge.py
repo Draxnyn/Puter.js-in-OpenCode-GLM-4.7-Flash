@@ -162,9 +162,23 @@ def attach_local_media(messages: list[object], puter_model: str) -> list[object]
     if not paths:
         return messages
 
+    context: list[str] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        content_value = message.get("content")
+        if isinstance(content_value, str):
+            context.append(content_value)
+        elif isinstance(content_value, list):
+            for block in content_value:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    context.append(str(block.get("text", "")))
     content: list[dict[str, object]] = [{
         "type": "text",
-        "text": "Analyze the following local file(s) requested in the conversation.",
+        "text": (
+            "Analyze the following local file(s) requested in the conversation.\n\n"
+            "Relevant task context:\n" + "\n".join(item for item in context if item)[-24_000:]
+        ),
     }]
     for path in paths:
         mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
@@ -178,7 +192,10 @@ def attach_local_media(messages: list[object], puter_model: str) -> list[object]
                 "mime": mime,
                 "data_url": data_url,
             })
-    return [*messages, {"role": "user", "content": content}]
+    # Puter's multimodal schema only accepts text and file blocks. A compact
+    # standalone vision prompt avoids forwarding OpenCode's internal history
+    # blocks (tool-call, tool-result, reasoning, etc.) to the vision model.
+    return [{"role": "user", "content": content}]
 
 
 def normalize_messages_for_puter(messages: list[object]) -> list[dict[str, object]]:
