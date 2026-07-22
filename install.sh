@@ -5,7 +5,7 @@ source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 bridge_dir="${OPENCODE_PUTER_BRIDGE_DIR:-$HOME/.local/share/opencode-puter-bridge}"
 bin_dir="$HOME/.local/bin"
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-tui_config="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/tui.json"
+tui_config="$config_dir/tui.json"
 real_opencode="$HOME/.opencode/bin/opencode"
 
 port_available() {
@@ -73,14 +73,10 @@ fi
 
 install -m 0644 "$source_dir/puter_bridge.py" "$bridge_dir/puter_bridge.py"
 install -m 0644 "$source_dir/puter_bridge.html" "$bridge_dir/puter_bridge.html"
-install -m 0644 "$source_dir/subagent-selector.ts" "$bridge_dir/subagent-selector.ts"
 install -m 0755 "$source_dir/run_opencode_puter.sh" "$bridge_dir/run_opencode_puter.sh"
 install -m 0755 "$source_dir/opencode-wrapper.sh" "$bin_dir/opencode"
 printf 'PUTER_BRIDGE_PORT=%q\n' "$bridge_port" > "$bridge_dir/bridge-settings.sh"
 printf 'OPENCODE_REAL_BIN=%q\n' "$real_opencode" >> "$bridge_dir/bridge-settings.sh"
-if [[ ! -e "$bridge_dir/subagent-model" ]]; then
-    printf '%s\n' 'glm-4.7-flash' > "$bridge_dir/subagent-model"
-fi
 
 if [[ ! -e "$config_dir/opencode.jsonc" ]]; then
     install -m 0644 "$source_dir/templates/opencode.jsonc" "$config_dir/opencode.jsonc"
@@ -95,13 +91,28 @@ else
     printf 'Kept existing OpenCode configuration: %s\n' "$config_dir/opencode.jsonc"
 fi
 
-if [[ ! -e "$tui_config" ]]; then
-    install -m 0644 "$source_dir/templates/tui.json" "$tui_config"
-    sed -i "s#PUTER_SUBAGENT_SELECTOR_PLUGIN#file://${bridge_dir}/subagent-selector.ts#g" "$tui_config"
-    printf 'Installed the /subagent TUI selector.\n'
-elif ! grep -Fq 'subagent-selector.ts' "$tui_config"; then
-    printf 'Existing TUI configuration needs this plugin entry:\n'
-    printf '  file://%s/subagent-selector.ts\n' "$bridge_dir"
+# Remove the selector used by older releases. The master routes work across
+# the code, reasoning, and vision pools while keeping a shared seven-agent cap.
+if [[ -f "$tui_config" ]]; then
+    python3 - "$tui_config" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    config = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    raise SystemExit(0)
+plugins = config.get("plugin")
+if not isinstance(plugins, list):
+    raise SystemExit(0)
+filtered = [item for item in plugins if "subagent-selector.ts" not in str(item)]
+if filtered != plugins:
+    config["plugin"] = filtered
+    path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    print("Removed the obsolete /subagent selector.")
+PY
 fi
 
 path_line='export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"'

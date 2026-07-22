@@ -34,11 +34,37 @@
   const errorText = error => error?.message || error?.msg || (typeof error === 'object' ? JSON.stringify(error) : String(error || 'Unknown error'));
   const isQuotaError = error => /\b(quota|rate[ -]?limit|too many requests?|resource exhausted|credits? exceeded)\b|\b429\b/i.test(errorText(error));
 
-  async function chatWithQuotaRetry(request) {
+  async function prepareLocalFiles(request) {
+    const temporaryPaths = [];
+    let fileIndex = 0;
+    const prompt = await Promise.all(request.prompt.map(async message => {
+      if (!Array.isArray(message?.content)) return message;
+      const content = await Promise.all(message.content.map(async part => {
+        if (part?.type !== 'local_file') return part;
+        const blob = await fetch(part.data_url).then(response => response.blob());
+        const safeName = String(part.name || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const uploaded = await puter.fs.write(
+          `opencode-bridge-${request.id}-${fileIndex++}-${safeName}`,
+          blob,
+          { overwrite: true }
+        );
+        temporaryPaths.push(uploaded.path);
+        return { type: 'file', puter_path: uploaded.path };
+      }));
+      return { ...message, content };
+    }));
+    return { prompt, temporaryPaths };
+  }
+
+  async function removeTemporaryFiles(paths) {
+    await Promise.allSettled(paths.map(path => puter.fs.delete(path)));
+  }
+
+  async function chatWithQuotaRetry(request, prompt) {
     let attempt = 0;
     for (;;) {
       try {
-        return await puter.ai.chat(request.prompt, {
+        return await puter.ai.chat(prompt, {
           model: request.model,
           ...(request.options || {})
         });
@@ -55,14 +81,18 @@
   async function answer(request) {
     activeRequests += 1;
     status.textContent = `Querying ${request.model} (${activeRequests}/${maxConcurrentRequests})…`;
+    let temporaryPaths = [];
     try {
-      const result = await chatWithQuotaRetry(request);
+      const prepared = await prepareLocalFiles(request);
+      temporaryPaths = prepared.temporaryPaths;
+      const result = await chatWithQuotaRetry(request, prepared.prompt);
       await fetch(`${endpoint}/answer`, { method: 'POST', headers,
         body: JSON.stringify({ id: request.id, result }) });
     } catch (error) {
       await fetch(`${endpoint}/answer`, { method: 'POST', headers,
         body: JSON.stringify({ id: request.id, error: errorText(error) }) });
     } finally {
+      await removeTemporaryFiles(temporaryPaths);
       activeRequests -= 1;
       status.textContent = activeRequests
         ? `Processing ${activeRequests}/${maxConcurrentRequests} OpenCode requests…`

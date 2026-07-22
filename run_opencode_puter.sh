@@ -11,11 +11,6 @@ fi
 # The token protects the local bridge and is also used as the OpenCode API key.
 export PUTER_BRIDGE_TOKEN="${PUTER_BRIDGE_TOKEN:-$(openssl rand -hex 32)}"
 export PUTER_BRIDGE_PORT="${PUTER_BRIDGE_PORT:-8765}"
-export PUTER_SUBAGENT_MODEL_FILE="${PUTER_SUBAGENT_MODEL_FILE:-$PWD/subagent-model}"
-
-if [[ ! -f "$PUTER_SUBAGENT_MODEL_FILE" ]]; then
-    printf '%s\n' 'glm-4.7-flash' > "$PUTER_SUBAGENT_MODEL_FILE"
-fi
 
 state_dir="${XDG_STATE_HOME:-"${HOME}/.local/state"}/opencode"
 bridge_log="${state_dir}/puter-bridge.log"

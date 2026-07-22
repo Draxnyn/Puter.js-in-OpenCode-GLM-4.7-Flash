@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Local OpenAI-compatible bridge between OpenCode and browser-based Puter.js."""
 
+import base64
 import json
 import logging
+import mimetypes
 import os
+import re
 import threading
 import time
 import uuid
@@ -26,16 +29,14 @@ REQUEST_TIMEOUT = int(os.getenv("PUTER_BRIDGE_TIMEOUT", "600"))
 PAGE = Path(__file__).with_name("puter_bridge.html")
 MODEL_MAP = {
     "glm-4.7-flash": "z-ai:z-ai/glm-4.7-flash",
-    "nemotron-nano-9b-v2-free": "nvidia/nemotron-nano-9b-v2:free",
-    "cobuddy-free": "baidu/cobuddy:free",
+    "prism-ml/ternary-bonsai-27b": "prism-ml/ternary-bonsai-27b",
+    "cohere/north-mini-code:free": "cohere/north-mini-code:free",
+    "z-ai/glm-4.6v-flash": "z-ai/glm-4.6v-flash",
 }
-SUBAGENT_MODEL_FILE = Path(
-    os.getenv(
-        "PUTER_SUBAGENT_MODEL_FILE",
-        str(Path(__file__).with_name("subagent-model")),
-    )
-)
-DEFAULT_SUBAGENT_MODEL = "glm-4.7-flash"
+VISION_MODEL = "z-ai/glm-4.6v-flash"
+LOCAL_MEDIA_SUFFIXES = {".gif", ".jpeg", ".jpg", ".pdf", ".png", ".webp"}
+MAX_LOCAL_MEDIA_BYTES = int(os.getenv("PUTER_MAX_LOCAL_MEDIA_BYTES", str(20 * 1024 * 1024)))
+QUOTED_LOCAL_PATH = re.compile(r'''["'](/[^"']+)["']''')
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -105,13 +106,79 @@ bridge = Bridge()
 
 
 def resolve_puter_model(opencode_model: str) -> str | None:
-    if opencode_model != "subagent":
-        return MODEL_MAP.get(opencode_model)
-    try:
-        selected = SUBAGENT_MODEL_FILE.read_text(encoding="utf-8").strip()
-    except OSError:
-        selected = DEFAULT_SUBAGENT_MODEL
-    return MODEL_MAP.get(selected, MODEL_MAP[DEFAULT_SUBAGENT_MODEL])
+    return MODEL_MAP.get(opencode_model)
+
+
+def local_media_paths(messages: list[object]) -> list[Path]:
+    """Find local visual files explicitly referenced by the OpenCode conversation."""
+    candidates: list[str] = []
+
+    def inspect(value: object) -> None:
+        if isinstance(value, str):
+            candidates.extend(QUOTED_LOCAL_PATH.findall(value))
+            try:
+                parsed = json.loads(value)
+            except (json.JSONDecodeError, TypeError):
+                return
+            inspect(parsed)
+            return
+        if isinstance(value, list):
+            for item in value:
+                inspect(item)
+            return
+        if not isinstance(value, dict):
+            return
+        for key, item in value.items():
+            if key in {"filePath", "file_path", "path"} and isinstance(item, str):
+                candidates.append(item)
+            inspect(item)
+
+    inspect(messages)
+    found: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        path = Path(candidate).expanduser()
+        try:
+            resolved = path.resolve(strict=True)
+            size = resolved.stat().st_size
+        except OSError:
+            continue
+        if (
+            resolved in seen
+            or resolved.suffix.lower() not in LOCAL_MEDIA_SUFFIXES
+            or size > MAX_LOCAL_MEDIA_BYTES
+        ):
+            continue
+        seen.add(resolved)
+        found.append(resolved)
+    return found
+
+
+def attach_local_media(messages: list[object], puter_model: str) -> list[object]:
+    """Attach files referenced through OpenCode tools to Puter's vision request."""
+    if puter_model != VISION_MODEL:
+        return messages
+    paths = local_media_paths(messages)
+    if not paths:
+        return messages
+
+    content: list[dict[str, object]] = [{
+        "type": "text",
+        "text": "Analyze the following local file(s) requested in the conversation.",
+    }]
+    for path in paths:
+        mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        data_url = f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
+        if mime.startswith("image/"):
+            content.append({"type": "image_url", "image_url": {"url": data_url}})
+        else:
+            content.append({
+                "type": "local_file",
+                "name": path.name,
+                "mime": mime,
+                "data_url": data_url,
+            })
+    return [*messages, {"role": "user", "content": content}]
 
 
 def content_from_result(result: object) -> str:
@@ -251,7 +318,7 @@ class Handler(BaseHTTPRequestHandler):
         opencode_model = str(body.get("model", ""))
         puter_model = resolve_puter_model(opencode_model)
         if puter_model is None:
-            supported = ", ".join([*MODEL_MAP, "subagent"])
+            supported = ", ".join(MODEL_MAP)
             raise ValueError(f"Unsupported model. Available models: {supported}.")
 
         messages = body.get("messages")
@@ -261,7 +328,8 @@ class Handler(BaseHTTPRequestHandler):
         options: dict[str, object] = {"tools": body.get("tools", [])}
         if body.get("tool_choice") is not None:
             options["tool_choice"] = body["tool_choice"]
-        result = bridge.submit(messages, puter_model, options)
+        prompt = attach_local_media(messages, puter_model)
+        result = bridge.submit(prompt, puter_model, options)
         return message_from_result(result), uuid.uuid4().hex, usage_from_result(result), opencode_model
 
     def send_openai_completion(self, body: dict[str, object]) -> None:

@@ -2,7 +2,7 @@
 
 # OpenCode Puter Bridge
 
-O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash continua sendo o modelo mestre padrão**, enquanto o modelo dos subagentes pode ser escolhido na TUI.
+O **OpenCode Puter Bridge** conecta o OpenCode ao Puter por uma API local compatível com OpenAI. Ele usa uma sessão Puter autenticada no navegador. O **GLM-4.7 Flash é o modelo mestre padrão**.
 
 ---
 
@@ -26,7 +26,7 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 - Modelo mestre padrão: `puter/glm-4.7-flash`.
 - Endpoint `/v1/chat/completions` compatível com OpenAI.
 - Tradução de tool calls para ações agenciais do OpenCode.
-- Até sete subagentes usando o modelo escolhido com `/subagent`.
+- Modelos Puter gratuitos selecionados para mestre, código, raciocínio e visão.
 - Concorrência configurável no navegador, com duas requisições Puter simultâneas por padrão.
 - Repasse de uso de tokens quando o Puter inclui esses dados na resposta.
 
@@ -34,9 +34,10 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 
 | Modelo | ID no Puter | Uso indicado |
 |---|---|---|
-| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Modelo mestre e de subagentes por padrão; programação agencial e ferramentas |
-| NVIDIA Nemotron Nano 9B V2 | `nvidia/nemotron-nano-9b-v2:free` | Chat, raciocínio configurável e alta velocidade |
-| Baidu Qianfan CoBuddy | `baidu/cobuddy:free` | Programação, agentes e ferramentas |
+| GLM 4.7 Flash | `z-ai/glm-4.7-flash` | Mestre padrão; roteamento, programação agencial e ferramentas |
+| Cohere North Mini Code | `cohere/north-mini-code:free` | Código e repositórios |
+| Prism ML Ternary Bonsai 27B | `prism-ml/ternary-bonsai-27b` | Raciocínio pesado e arquitetura |
+| Z.AI GLM 4.6V Flash | `z-ai/glm-4.6v-flash` | Imagens, capturas de tela, documentos visuais e PDFs |
 
 ---
 
@@ -78,6 +79,7 @@ A página da ponte sempre exibe o botão **Sign in to Puter**. Depois da autenti
 | `PUTER_MAX_CONCURRENT` | `2` | Máximo de chamadas simultâneas ao Puter. Faixa aceita: 1–8. |
 | `PUTER_BRIDGE_PORT` | `8765` | Porta local da ponte. |
 | `PUTER_BRIDGE_TIMEOUT` | `600` | Tempo de espera pela resposta do navegador, em segundos. |
+| `PUTER_MAX_LOCAL_MEDIA_BYTES` | `20971520` | Tamanho máximo de imagem ou PDF local enviado à visão, em bytes. |
 
 Exemplo:
 
@@ -87,29 +89,13 @@ PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 
 ---
 
-## Subagentes
-
-O mestre sempre começa com `puter/glm-4.7-flash`. O template cria `puter-worker-1` até `puter-worker-7`; eles não podem criar novos trabalhadores.
-
-Digite `/subagent` para abrir um seletor nativo na TUI, semelhante ao `/model`. Os modelos disponíveis para os subagentes são:
-
-- GLM 4.7 Flash — padrão.
-- NVIDIA Nemotron Nano 9B V2 — `nvidia/nemotron-nano-9b-v2:free`.
-- Baidu Qianfan CoBuddy — `baidu/cobuddy:free`.
-
-Alterar `/model` muda o modelo primário atual. Alterar `/subagent` muda apenas as próximas chamadas de subagentes. A seleção fica armazenada localmente e é reutilizada na próxima execução.
-
-O próprio OpenCode controla o agendamento das tarefas. A configuração limita as identidades de trabalhadores disponíveis a sete.
-
----
-
 ## Uso de tokens
 
 A ponte repassa `prompt_tokens`, `completion_tokens` e `total_tokens` quando o Puter inclui esses campos nos metadados da resposta. Alguns provedores Puter podem não retornar uso por chamada; nesse caso, o OpenCode não consegue mostrar contagens ou custo exatos.
 
 ## Nova tentativa de quota
 
-Quando o Puter retorna erro de quota ou rate-limit, a ponte do navegador mantém a mesma requisição do OpenCode viva e tenta novamente após 5 segundos. A espera aumenta até 30 segundos entre tentativas. Isso vale tanto para o agente mestre quanto para cada subagente: uma quota temporária não volta ao OpenCode como falha final de uma ferramenta.
+Quando o Puter retorna erro de quota ou rate-limit, a ponte do navegador mantém a requisição viva e tenta novamente após 5 segundos. A espera aumenta até 30 segundos entre tentativas.
 
 ---
 
