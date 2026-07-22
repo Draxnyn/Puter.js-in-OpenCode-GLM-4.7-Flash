@@ -26,8 +26,7 @@ A ponte fica em `127.0.0.1`; nenhum token da sessão Puter é enviado para um se
 - Modelo mestre padrão: `puter/glm-4.7-flash`.
 - Endpoint `/v1/chat/completions` compatível com OpenAI.
 - Tradução de tool calls para ações agenciais do OpenCode.
-- Até sete subagentes de código, raciocínio e visão com roteamento automático.
-- Envio de imagens e PDFs locais aos subagentes de visão GLM 4.6V Flash.
+- Modelos Puter gratuitos selecionados para mestre, código, raciocínio e visão.
 - Concorrência configurável no navegador, com duas requisições Puter simultâneas por padrão.
 - Repasse de uso de tokens quando o Puter inclui esses dados na resposta.
 
@@ -87,22 +86,6 @@ Exemplo:
 ```bash
 PUTER_MAX_CONCURRENT=2 ./run_opencode_puter.sh
 ```
-
----
-
-## Subagentes
-
-O mestre sempre começa com `puter/glm-4.7-flash`. Ele tem um orçamento compartilhado de **até sete subagentes por tarefa**, e não uma divisão fixa de 3/2/2. Pode distribuir livremente essas sete chamadas:
-
-- `puter-code-1` até `puter-code-7` usam North Mini Code.
-- `puter-reason-1` até `puter-reason-7` usam Ternary Bonsai 27B.
-- `puter-vision-1` até `puter-vision-7` usam GLM 4.6V Flash.
-
-Por exemplo, uma tarefa pode usar seis trabalhadores de código e um de raciocínio; ou cinco de código, um de raciocínio e um de visão. O mestre nunca pode iniciar mais de sete no total, somando os três grupos.
-
-Quando um trabalhador de visão recebe uma conversa contendo o caminho local de uma imagem ou PDF entre aspas, a ponte anexa o arquivo real em vez de encaminhar somente o caminho. PDFs são enviados temporariamente ao filesystem autenticado do Puter e apagados depois da resposta.
-
-Os trabalhadores não podem criar novos trabalhadores. O OpenCode controla o agendamento, e o mestre aplica o limite compartilhado de sete.
 
 ---
 
